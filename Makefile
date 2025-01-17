@@ -22,6 +22,9 @@ DEBUG = 1
 # C++ source files
 CXX_SOURCES = \
 libs/lsm9ds1/lsm9ds1.cpp \
+libs/vl53l4ed/platform.cpp \
+libs/vl53l4ed/VL53L4ED_api.cpp \
+libs/vl53l4ed/VL53L4ED_calibration.cpp \
 $(main)
 
 # C source files
@@ -45,6 +48,7 @@ C_INCLUDES =  \
 -I"rodos/api" \
 \
 -I"libs/lsm9ds1" \
+-I"libs/vl53l4ed"
 
 # C/C++ defines
 C_DEFS =  \
