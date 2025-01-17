@@ -1,19 +1,20 @@
-// Raw accelerometer and gyroscope measurements form LSM9DS1
+// Test file for VL53L4ED ToF sensor with (or without) median filter
 
 #include "rodos.h"
+#include "MedianFilter.h"
 #include "VL53L4ED_api.h"
-
-#define D2R 0.01745329251f
-#define R2D 57.2957795131f
 
 #define TOF_I2C_ADDRESS 0x29
 
-VL53L4ED_ResultsData_t tof_result;
+// true enables median filter
+bool tof_filter_flag = false;
+static MedianFilter<int, 25> filter;
 
 class HelloTOF : public StaticThread<>
 {
   void init()
   {
+    tof_i2c_init();
 
     // Initialize and return status
     if (VL53L4ED_SensorInit(TOF_I2C_ADDRESS) == VL53L4ED_ERROR_NONE)
@@ -21,11 +22,11 @@ class HelloTOF : public StaticThread<>
       // Enable 10 ms sampling and start sampling
       VL53L4ED_SetRangeTiming(TOF_I2C_ADDRESS, 10, 0);
       VL53L4ED_StartRanging(TOF_I2C_ADDRESS);
-      PRINTF("\r\nTOF success!\r\n");
+      PRINTF("\r\nToF initialized!\r\n");
     }
     else
     {
-      PRINTF("\r\nTOF error!\r\n");
+      PRINTF("\r\nToF error!\r\n");
       while (1)
       {
       }
@@ -36,8 +37,41 @@ class HelloTOF : public StaticThread<>
   {
     init();
 
-    TIME_LOOP(100 * MILLISECONDS, 100 * MILLISECONDS)
+    // A guide to using the VL53L4CD ultra lite driver (UM2931): Figure 7
+    TIME_LOOP(100 * MILLISECONDS, 1000 * MILLISECONDS)
     {
+      uint8_t data_ready = 0;
+      int distance = 0;
+
+      VL53L4ED_ResultsData_t tof_result;
+
+      // Wait for data to be ready
+      if (data_ready != (uint8_t)1)
+      {
+        AT(NOW() + 2 * MILLISECONDS);
+        VL53L4ED_CheckForDataReady(TOF_I2C_ADDRESS, &data_ready);
+      }
+
+      // Read distance measurements
+      if (VL53L4ED_GetResult(TOF_I2C_ADDRESS, &tof_result) == VL53L4ED_ERROR_NONE)
+      {
+        if (tof_filter_flag)
+        {
+          filter.addSample(tof_result.distance_mm);
+          distance = filter.getMedian();
+        }
+        else
+        {
+          distance = tof_result.distance_mm;
+        }
+
+        PRINTF("Distance: %d mm\n", distance);
+        VL53L4ED_ClearInterrupt(TOF_I2C_ADDRESS);
+      }
+      else
+      {
+        PRINTF("ToF ranging error!\n");
+      }
     }
   }
 
