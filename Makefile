@@ -21,6 +21,7 @@ DEBUG = 1
 
 # C++ source files
 CXX_SOURCES = \
+libs/lsm9ds1/lsm9ds1.cpp \
 $(main)
 
 # C source files
@@ -41,7 +42,9 @@ C_INCLUDES =  \
 -I"rodos/src/independent" \
 -I"rodos/default_usr_configs" \
 -I"rodos/api/hal" \
--I"rodos/api"
+-I"rodos/api" \
+\
+-I"libs/lsm9ds1" \
 
 # C/C++ defines
 C_DEFS =  \
