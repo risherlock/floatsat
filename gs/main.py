@@ -123,7 +123,7 @@ class RealTimeGraphs(QWidget):
             self.curves[i].setData(list(range(100)), self.data[i])
 
 
-class Clock(QMainWindow):
+class Compass(QMainWindow):
 
   def __init__(self):
     super().__init__()
@@ -412,13 +412,13 @@ class MainApplication(QMainWindow):
     self.serial_port_gui = SerialPortGUI()
     self.tabs.addTab(self.serial_port_gui, "Serial Port")
 
-    # Add the Clock as a tab
-    self.clock_widget = Clock()
-    self.tabs.addTab(self.clock_widget, "Clock")
+    # Add the compass as a tab
+    self.compass_widget = Compass()
+    self.tabs.addTab(self.compass_widget, "Compass")
 
     # Add the Real-Time Graphs as a tab
     self.real_time_graphs = RealTimeGraphs()
-    self.tabs.addTab(self.real_time_graphs, "Real-Time Graphs")
+    self.tabs.addTab(self.real_time_graphs, "Accelerometer")
 
     # Create and start RODOS thread
     self.rodos_thread = rodos_thread()
