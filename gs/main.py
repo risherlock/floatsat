@@ -85,133 +85,6 @@ class SerialThread(QThread):
     else:
       self.error_occurred.emit("Serial port is not open")
 
-class RealTimeGraphs(QWidget):
-    def __init__(self):
-        super().__init__()
-
-        layout = QVBoxLayout()
-        self.setLayout(layout)
-
-        self.graphs = []
-        self.curves = []
-        self.data = []
-
-        for title, color in [("Accelerometer X", 'r'), ("Accelerometer Y", 'g'), ("Accelerometer Z", 'b')]:
-            plot = pyqtgraph.PlotWidget()
-            plot.setBackground('w')
-            plot.setTitle(title, color=color, size="15pt")
-            plot.setLabel('left', 'Value', color='r', size=12)
-            plot.setLabel('bottom', 'Time', color='r', size=12)
-            plot.setXRange(0, 100, padding=0)
-            plot.setYRange(0, 10, padding=0)  # Adjust as needed for your data
-
-            curve = plot.plot(pen=pyqtgraph.mkPen(color=color, width=2))
-            layout.addWidget(plot)
-
-            self.graphs.append(plot)
-            self.curves.append(curve)
-            self.data.append([0] * 100)
-
-        self.timer = QTimer()
-        self.timer.setInterval(100)
-        self.timer.timeout.connect(self.update_graphs)
-        self.timer.start()
-
-    def update_graphs(self):
-        for i in range(3):
-            self.data[i] = self.data[i][1:] + [random.uniform(0, 10)]
-            self.curves[i].setData(list(range(100)), self.data[i])
-
-
-class Compass(QMainWindow):
-
-  def __init__(self):
-    super().__init__()
-    timer = QTimer(self)
-    timer.timeout.connect(self.update)
-    timer.start(1000)
-    self.setWindowTitle('compass')
-    self.setGeometry(200, 200, 300, 300)
-    self.setStyleSheet("background : white;")
-    self.hPointer = QtGui.QPolygon([QPoint(6, 0),
-                                        QPoint(-6, 0),
-                                        QPoint(0, -50)])
-    self.rPointer = QtGui.QPolygon([QPoint(6, 0),
-                                        QPoint(-6, 0),
-                                        QPoint(0, 50)])
-    self.bColor = Qt.black
-    self.rColor = Qt.red
-
-  def paintEvent(self, event):
-    rec = min(self.width(), self.height())
-    tik = QTime.currentTime()
-    painter = QPainter(self)
-
-    def drawPointer(color, rotation, pointer):
-      painter.setBrush(QBrush(color))
-      painter.save()
-      painter.rotate(rotation)
-      painter.drawConvexPolygon(pointer)
-      painter.restore()
-
-    painter.setRenderHint(QPainter.Antialiasing)
-    painter.translate(self.width() / 2, self.height() / 2)
-    painter.scale(rec / 200, rec / 200)
-    painter.setPen(QtCore.Qt.NoPen)
-
-    drawPointer(self.bColor, 5 * tik.second(), self.hPointer)
-    drawPointer(self.rColor, 5 * tik.second(), self.rPointer)
-    painter.setPen(QPen(self.bColor))
-
-    for i in range(0, 60):
-      if (i % 5) == 0:
-          painter.drawLine(87, 0, 97, 0)
-      painter.rotate(6)
-
-    painter.end()
-
-
-class rodos_thread(QThread):
-  # Signal to send data to graph
-  new_data = pyqtSignal(float, float, float)
-
-  def __init__(self, parent: Optional[QWidget] = None):
-    super().__init__(parent)
-    self.is_running = True
-
-  def run(self):
-    rodos.printTopicInit(enable = True)
-
-    # Callback function to process received data
-    def topic_handler(data):
-      try:
-        unpacked = struct.unpack("qI", data);
-        print("RODOS sends index: {} and time (s): {}".format(unpacked[0], unpacked[1]))
-      except Exception as e:
-        print(e)
-        print(data)
-        print(len(data))
-
-    python_to_rodos = rodos.Topic(1002)
-    rodos_to_python = rodos.Topic(1003)
-    link_uart = rodos.LinkinterfaceUART(path = "/dev/rfcomm0")
-    gateway_uart = rodos.gateway(link_uart)
-    gateway_uart.run()
-
-    rodos_to_python.addSubscriber(topic_handler)
-    gateway_uart.forwardTopic(python_to_rodos)
-
-    while self.is_running:
-      sensor_index = 0
-      x, y, z = 3.1415, 2.7182, 12345
-      sensor_struct = struct.pack("20sIddd", b"Magnetometer", sensor_index, x, y, z)
-      python_to_rodos.publish(sensor_struct)
-      self.sleep(1)
-
-    def stop(self):
-      self.is_running = False
-      self.quit()
-      self.wait()
 
 class SerialPortGUI(QMainWindow):
     """
@@ -347,7 +220,7 @@ class SerialPortGUI(QMainWindow):
       stop_bits = QSerialPort.StopBits(self.stop_bits_combo.currentIndex())
       flow_control = QSerialPort.FlowControl(self.flow_control_combo.currentIndex())
 
-      self.serial_thread.setup_port(port_name, baud_rate, data_bits, 
+      self.serial_thread.setup_port(port_name, baud_rate, data_bits,
                                     parity, stop_bits, flow_control)
       self.serial_thread.start()
 
@@ -398,6 +271,128 @@ class SerialPortGUI(QMainWindow):
       # Accept the event.
       event.accept()
 
+class RealTimeGraphs(QWidget):
+    def __init__(self):
+        super().__init__()
+
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+
+        self.graphs = []
+        self.curves = []
+        self.data = []
+
+        for title, color in [("Accelerometer X", 'r'), ("Accelerometer Y", 'g'), ("Accelerometer Z", 'b')]:
+            plot = pyqtgraph.PlotWidget()
+            plot.setBackground('w')
+            plot.setTitle(title, color=color, size="15pt")
+            plot.setLabel('left', 'Value', color='r', size=12)
+            plot.setLabel('bottom', 'Time', color='r', size=12)
+            plot.setXRange(0, 100, padding=0)
+            plot.setYRange(0, 10, padding=0)  # Adjust as needed for your data
+
+            curve = plot.plot(pen=pyqtgraph.mkPen(color=color, width=2))
+            layout.addWidget(plot)
+
+            self.graphs.append(plot)
+            self.curves.append(curve)
+            self.data.append([0] * 100)
+
+    def update_graph_data(self, ax, ay, az, heading):
+        new_data = [ax, ay, az]
+        for i in range(3):
+            self.data[i] = self.data[i][1:] + [new_data[i]]
+            self.curves[i].setData(list(range(100)), self.data[i])
+
+class Compass(QMainWindow):
+
+  def __init__(self):
+    super().__init__()
+    self.angle = 0
+    timer = QTimer(self)
+    timer.timeout.connect(self.update)
+    timer.start(1000)
+    self.setWindowTitle('compass')
+    self.setGeometry(200, 200, 300, 300)
+    self.setStyleSheet("background : white;")
+    self.hPointer = QtGui.QPolygon([QPoint(6, 0),
+                                        QPoint(-6, 0),
+                                        QPoint(0, -50)])
+    self.rPointer = QtGui.QPolygon([QPoint(6, 0),
+                                        QPoint(-6, 0),
+                                        QPoint(0, 50)])
+    self.bColor = Qt.black
+    self.rColor = Qt.red
+
+  def paintEvent(self, event):
+    rec = min(self.width(), self.height())
+    # tik = QTime.currentTime()
+    painter = QPainter(self)
+
+    def drawPointer(color, rotation, pointer):
+      painter.setBrush(QBrush(color))
+      painter.save()
+      painter.rotate(rotation)
+      painter.drawConvexPolygon(pointer)
+      painter.restore()
+
+    painter.setRenderHint(QPainter.Antialiasing)
+    painter.translate(self.width() / 2, self.height() / 2)
+    painter.scale(rec / 200, rec / 200)
+    painter.setPen(QtCore.Qt.NoPen)
+
+    drawPointer(self.bColor,  -self.angle * 3.0, self.hPointer)
+    drawPointer(self.rColor,  -self.angle * 3.0, self.rPointer)
+    painter.setPen(QPen(self.bColor))
+
+    for i in range(0, 60):
+      if (i % 5) == 0:
+          painter.drawLine(87, 0, 97, 0)
+      painter.rotate(6)
+
+    painter.end()
+
+  def set_angle(self, ax, ay, az, heading):
+    self.angle = heading
+    self.update()
+
+class rodos_thread(QThread):
+  # Signal to send data to graph
+  new_data = pyqtSignal(float, float, float, float)
+
+  def __init__(self, parent: Optional[QWidget] = None):
+    super().__init__(parent)
+    self.is_running = True
+
+  def run(self):
+    rodos.printTopicInit(enable = True)
+
+    # Callback function to process received data
+    def topic_handler(data):
+      try:
+        unpacked = struct.unpack("dddd", data);
+        print("RODOS sends ax: {}, ay: {}, az: {}, and heading: {}".format(unpacked[0], unpacked[1], unpacked[2], unpacked[3]))
+        ax, ay, az, heading = unpacked
+        self.new_data.emit(ax, ay, az, heading)
+      except Exception as e:
+        print(e)
+        print(data)
+        print(len(data))
+
+    python_to_rodos = rodos.Topic(1002)
+    rodos_to_python = rodos.Topic(1003)
+    luart = rodos.LinkinterfaceUART(path="/dev/rfcomm0")
+    gwUart = rodos.Gateway(luart)
+    gwUart.run()
+
+    rodos_to_python.addSubscriber(topic_handler)
+    gwUart.forwardTopic(python_to_rodos)
+
+    def stop(self):
+      self.is_running = False
+      self.quit()
+      self.wait()
+
 class MainApplication(QMainWindow):
   def __init__(self):
     super().__init__()
@@ -422,8 +417,10 @@ class MainApplication(QMainWindow):
 
     # Create and start RODOS thread
     self.rodos_thread = rodos_thread()
+    self.rodos_thread.new_data.connect(self.real_time_graphs.update_graph_data)
+    self.rodos_thread.new_data.connect(self.compass_widget.set_angle)
     self.rodos_thread.start()
-    # self.rodos_thread.new_data.connect(self.real_time_graphs.update_graphs)
+
 
 if __name__ == "__main__":
   app = QApplication(sys.argv)
