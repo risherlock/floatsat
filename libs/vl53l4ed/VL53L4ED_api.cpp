@@ -227,10 +227,13 @@ VL53L4ED_Error VL53L4ED_SensorInit(
 	status |= VL53L4ED_ClearInterrupt(dev);
 	status |= VL53L4ED_StopRanging(dev);
 	status |= VL53L4ED_WrByte(dev,
-			VL53L4ED_VHV_CONFIG__TIMEOUT_MACROP_LOOP_BOUND, 
+			VL53L4ED_VHV_CONFIG__TIMEOUT_MACROP_LOOP_BOUND,
                         (uint8_t)0x09);
 	status |= VL53L4ED_WrByte(dev, 0x0B, (uint8_t)0);
-	status |= VL53L4ED_WrWord(dev, 0x0024, 0x500);
+
+    // Commenting out this line solves the inaccurate distance problem in the
+	// STM32. I have not yet checked what this configuration is for. -rms
+	// status |= VL53L4ED_WrWord(dev, 0x0024, 0x500);
 
 	status |= VL53L4ED_SetRangeTiming(dev, 100, 0);
 

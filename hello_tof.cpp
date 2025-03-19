@@ -38,7 +38,7 @@ class HelloTOF : public StaticThread<>
     init();
 
     // A guide to using the VL53L4CD ultra lite driver (UM2931): Figure 7
-    TIME_LOOP(100 * MILLISECONDS, 1000 * MILLISECONDS)
+    TIME_LOOP(100 * MILLISECONDS, 500 * MILLISECONDS)
     {
       uint8_t data_ready = 0;
       int distance = 0;
@@ -48,7 +48,6 @@ class HelloTOF : public StaticThread<>
       // Wait for data to be ready
       if (data_ready != (uint8_t)1)
       {
-        AT(NOW() + 2 * MILLISECONDS);
         VL53L4ED_CheckForDataReady(TOF_I2C_ADDRESS, &data_ready);
       }
 
