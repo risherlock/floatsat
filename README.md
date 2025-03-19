@@ -220,7 +220,7 @@ There are various links in this README that directs to files and folders inside 
 If you find any issues with the content of this repository (such as confusing instructions or dead hyperlinks) or would like to make improvements, please feel free to either create a GitHub issue or submit a pull request. I highly encourage you to reach out if you need any assistance or guidance on RODOS, or for any other questions related to firmware development for FloatSat. My email is [metrictensor221b@gmail.com](mailto:metrictensor221b@gmail.com).
 
 <div align="right">
-  - Rishav
+  -rms
 </div>
 
 <div align="center">

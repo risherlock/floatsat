@@ -1,4 +1,4 @@
-//  Rishav (2023-11-04)
+// rms (2023-11-04)
 
 #include <cmath>
 #include "lsm9ds1.h"
